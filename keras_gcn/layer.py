@@ -97,7 +97,7 @@ class GraphConv(keras.layers.Layer):
         )
 
     def _call_pos(self, feature, edge, index):
-        return K.sum(feature * K.expand_dims(edge[index]), axis=0)
+        return K.sum(feature * K.expand_dims(edge[index]), axis=0) / K.sum(edge[index])
 
     def _get_walked_edges(self, edges, step_num):
         if step_num <= 1:

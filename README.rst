@@ -33,6 +33,12 @@ Usage
 ``GraphConv``
 ^^^^^^^^^^^^^^^^^
 
+
+.. image:: https://user-images.githubusercontent.com/853842/46204536-21670600-c350-11e8-8b6f-c39ed1e86d3d.png
+   :target: https://user-images.githubusercontent.com/853842/46204536-21670600-c350-11e8-8b6f-c39ed1e86d3d.png
+   :alt: 
+
+
 .. code-block:: python
 
    import keras

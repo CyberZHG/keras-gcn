@@ -9,7 +9,24 @@ from keras_gcn import GraphConv
 
 class TestGraphConv(unittest.TestCase):
 
-    def test_call(self):
+    input_data = [
+        [
+            [0, 1, 2],
+            [2, 3, 4],
+            [4, 5, 6],
+            [7, 7, 8],
+        ]
+    ]
+    input_edge = [
+        [
+            [1, 1, 1, 0],
+            [1, 1, 0, 0],
+            [1, 0, 1, 0],
+            [0, 0, 0, 1],
+        ]
+    ]
+
+    def test_average_step_1(self):
         data_layer = keras.layers.Input(shape=(None, 3), name='Input-Data')
         edge_layer = keras.layers.Input(shape=(None, None), dtype='int32', name='Input-Edge')
         conv_layer = GraphConv(
@@ -25,31 +42,18 @@ class TestGraphConv(unittest.TestCase):
             metrics=['mae'],
         )
         model.summary()
-        input_data = [
-            [
-                [0, 1, 2],
-                [2, 3, 4],
-                [4, 5, 6],
-                [7, 7, 8],
-            ]
-        ]
-        input_edge = [
-            [
-                [1, 1, 1, 0],
-                [1, 1, 0, 0],
-                [1, 0, 1, 0],
-                [0, 0, 0, 1],
-            ]
-        ]
-        predicts = model.predict([input_data, input_edge])[0]
+        predicts = model.predict([self.input_data, self.input_edge])[0]
         expects = np.asarray([
-            [27., 27.],
-            [12., 12.],
-            [18., 18.],
+            [9., 9.],
+            [6., 6.],
+            [9., 9.],
             [22., 22.],
         ])
         self.assertTrue(np.allclose(expects, predicts))
 
+    def test_average_step_inf(self):
+        data_layer = keras.layers.Input(shape=(None, 3), name='Input-Data')
+        edge_layer = keras.layers.Input(shape=(None, None), dtype='int32', name='Input-Edge')
         conv_layer = GraphConv(
             units=2,
             step_num=60000000,
@@ -67,12 +71,43 @@ class TestGraphConv(unittest.TestCase):
         model_path = os.path.join(tempfile.gettempdir(), 'test_save_load_%f.h5' % random.random())
         model.save(model_path)
         model = keras.models.load_model(model_path, custom_objects={'GraphConv': GraphConv})
-        predicts = model.predict([input_data, input_edge])[0].tolist()
+        predicts = model.predict([self.input_data, self.input_edge])[0].tolist()
         expects = np.asarray([
-            [27., 27.],
-            [27., 27.],
-            [27., 27.],
+            [9., 9.],
+            [9., 9.],
+            [9., 9.],
             [22., 22.],
         ])
-        print(predicts)
+        self.assertTrue(np.allclose(expects, predicts))
+
+    def test_fit(self):
+        data_layer = keras.layers.Input(shape=(None, 3), name='Input-Data')
+        edge_layer = keras.layers.Input(shape=(None, None), dtype='int32', name='Input-Edge')
+        conv_layer = GraphConv(
+            units=2,
+            name='GraphConv',
+        )([data_layer, edge_layer])
+        model = keras.models.Model(inputs=[data_layer, edge_layer], outputs=conv_layer)
+        model.compile(
+            optimizer='adam',
+            loss='mean_squared_error',
+            metrics=['mean_squared_error'],
+        )
+        expects = np.asarray([[
+            [9, 0],
+            [6, 0],
+            [9, 0],
+            [22, 0],
+        ]])
+        model.fit(
+            x=[self.input_data, self.input_edge],
+            y=expects,
+            epochs=10000,
+            callbacks=[
+                keras.callbacks.EarlyStopping(monitor='loss', patience=5),
+            ],
+            verbose=False,
+        )
+        predicts = model.predict([self.input_data, self.input_edge])
+        predicts = np.round(predicts)
         self.assertTrue(np.allclose(expects, predicts))

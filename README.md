@@ -16,6 +16,8 @@ pip install keras-gcn
 
 ### `GraphConv`
 
+![](https://user-images.githubusercontent.com/853842/46204536-21670600-c350-11e8-8b6f-c39ed1e86d3d.png)
+
 ```python
 import keras
 from keras_gru import GraphConv
