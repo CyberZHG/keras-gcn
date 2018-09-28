@@ -86,8 +86,6 @@ class GraphConv(GraphLayer):
         features, edges = inputs
         edges = K.cast(edges, K.floatx())
         features = K.dot(features, self.W)
-        if self.use_bias:
-            features += self.b
         if self.step_num > 1:
             edges = self._get_walked_edges(edges, self.step_num)
         outputs = K.map_fn(
@@ -106,6 +104,8 @@ class GraphConv(GraphLayer):
         )
 
     def _call_pos(self, feature, edge, index):
+        if self.use_bias:
+            feature += self.b
         return K.sum(feature * K.expand_dims(edge[index]), axis=0) / K.sum(edge[index])
 
 

@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='keras-gcn',
-    version='0.5',
+    version='0.6',
     packages=['keras_gcn'],
     url='https://github.com/CyberZHG/keras-gcn',
     license='MIT',
