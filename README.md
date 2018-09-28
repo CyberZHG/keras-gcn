@@ -34,3 +34,7 @@ conv_layer = GraphConv(
 ```
 
 `step_num` is the maximum distance of two nodes that could be considered as neighbors. If `step_num` is greater than 1, then the inputs of edges must be 0-1 matrices.
+
+### `GraphMaxPool` & `GraphAveragePool`
+
+Pooling layers with the `step_num` argument.

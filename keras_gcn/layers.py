@@ -2,7 +2,18 @@ import keras
 import keras.backend as K
 
 
-class GraphConv(keras.layers.Layer):
+class GraphLayer(keras.layers.Layer):
+
+    def _get_walked_edges(self, edges, step_num):
+        if step_num <= 1:
+            return edges
+        deeper = self._get_walked_edges(K.batch_dot(edges, edges), step_num // 2)
+        if step_num % 2 == 1:
+            deeper += edges
+        return K.cast(K.greater(deeper, 0.0), K.floatx())
+
+
+class GraphConv(GraphLayer):
 
     def __init__(self,
                  units,
@@ -83,7 +94,6 @@ class GraphConv(keras.layers.Layer):
             lambda x: self._call_single(x[0], x[1]),
             (features, edges),
             dtype=K.floatx(),
-            name='MapFn-Single',
         )
         outputs = self.activation(outputs)
         return outputs
@@ -93,16 +103,67 @@ class GraphConv(keras.layers.Layer):
             lambda index: self._call_pos(feature, edge, index),
             K.arange(K.shape(feature)[0]),
             dtype=K.floatx(),
-            name='MapFn-Pos',
         )
 
     def _call_pos(self, feature, edge, index):
         return K.sum(feature * K.expand_dims(edge[index]), axis=0) / K.sum(edge[index])
 
-    def _get_walked_edges(self, edges, step_num):
-        if step_num <= 1:
-            return edges
-        deeper = self._get_walked_edges(K.batch_dot(edges, edges), step_num // 2)
-        if step_num % 2 == 1:
-            deeper += edges
-        return K.cast(K.greater(deeper, 0.0), K.floatx())
+
+class GraphPool(GraphLayer):
+
+    def __init__(self,
+                 step_num=1,
+                 **kwargs):
+        self.step_num = step_num
+        self.supports_masking = True
+        super(GraphPool, self).__init__(**kwargs)
+
+    def get_config(self):
+        config = {
+            'step_num': self.step_num,
+        }
+        base_config = super(GraphPool, self).get_config()
+        return dict(list(base_config.items()) + list(config.items()))
+
+    def build(self, input_shape):
+        super(GraphPool, self).build(input_shape)
+
+    def compute_output_shape(self, input_shape):
+        return input_shape
+
+    def compute_mask(self, inputs, mask=None):
+        return mask[0]
+
+    def call(self, inputs, **kwargs):
+        features, edges = inputs
+        edges = K.cast(edges, K.floatx())
+        if self.step_num > 1:
+            edges = self._get_walked_edges(edges, self.step_num)
+        outputs = K.map_fn(
+            lambda x: self._call_single(x[0], x[1]),
+            (features, edges),
+            dtype=K.floatx(),
+        )
+        return outputs
+
+    def _call_single(self, feature, edge):
+        return K.map_fn(
+            lambda index: self._call_pos(feature, edge, index),
+            K.arange(K.shape(feature)[0]),
+            dtype=K.floatx(),
+        )
+
+    def _call_pos(self, feature, edge, index):
+        raise NotImplementedError('The class is not intended to be used directly.')
+
+
+class GraphMaxPool(GraphPool):
+
+    def _call_pos(self, feature, edge, index):
+        return K.max(feature + K.expand_dims((1.0 - edge[index]) * -1e10), axis=0)
+
+
+class GraphAveragePool(GraphPool):
+
+    def _call_pos(self, feature, edge, index):
+        return K.sum(feature * K.expand_dims(edge[index]), axis=0) / K.sum(edge[index])
