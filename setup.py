@@ -8,7 +8,7 @@ setup(
     license='MIT',
     author='CyberZHG',
     author_email='CyberZHG@gmail.com',
-    description='',
+    description='Graph convolutional layers',
     long_description=open('README.rst', 'r').read(),
     install_requires=[
         'numpy',
