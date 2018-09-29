@@ -106,7 +106,7 @@ class GraphConv(GraphLayer):
     def _call_pos(self, feature, edge, index):
         if self.use_bias:
             feature += self.b
-        return K.sum(feature * K.expand_dims(edge[index]), axis=0) / K.sum(edge[index])
+        return K.sum(feature * K.expand_dims(edge[index]), axis=0) / (K.sum(edge[index]) + K.epsilon())
 
 
 class GraphPool(GraphLayer):
