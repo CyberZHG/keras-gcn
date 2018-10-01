@@ -50,7 +50,7 @@ class TestGraphConv(unittest.TestCase):
             [10., 10.],
             [23., 23.],
         ])
-        self.assertTrue(np.allclose(expects, predicts))
+        self.assertTrue(np.allclose(expects, predicts), predicts)
 
     def test_average_step_inf(self):
         data_layer = keras.layers.Input(shape=(None, 3), name='Input-Data')
@@ -79,7 +79,7 @@ class TestGraphConv(unittest.TestCase):
             [9., 9.],
             [22., 22.],
         ])
-        self.assertTrue(np.allclose(expects, predicts))
+        self.assertTrue(np.allclose(expects, predicts), predicts)
 
     def test_fit(self):
         data_layer = keras.layers.Input(shape=(None, 3), name='Input-Data')
@@ -95,10 +95,10 @@ class TestGraphConv(unittest.TestCase):
             metrics=['mean_squared_error'],
         )
         expects = np.asarray([[
-            [9, 0],
-            [6, 0],
-            [9, 0],
-            [22, 0],
+            [9.5, 0.7],
+            [6.5, 0.7],
+            [9.5, 0.7],
+            [22.8, 1.0],
         ]])
         model.fit(
             x=[self.input_data, self.input_edge],
@@ -110,5 +110,4 @@ class TestGraphConv(unittest.TestCase):
             verbose=False,
         )
         predicts = model.predict([self.input_data, self.input_edge])
-        predicts = np.round(predicts)
-        self.assertTrue(np.allclose(expects, predicts))
+        self.assertTrue(np.allclose(expects, predicts, rtol=0.1, atol=0.1), predicts)

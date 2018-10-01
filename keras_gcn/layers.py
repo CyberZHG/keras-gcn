@@ -155,23 +155,13 @@ class GraphPool(GraphLayer):
 
 class GraphMaxPool(GraphPool):
 
+    NEG_INF = -1e38
+
     def _call(self, features, edges):
-        outputs = K.map_fn(
-            lambda x: self._call_single(x[0], x[1]),
-            (features, edges),
-            dtype=K.floatx(),
-        )
-        return outputs
-
-    def _call_single(self, feature, edge):
-        return K.map_fn(
-            lambda index: self._call_pos(feature, edge, index),
-            K.arange(K.shape(feature)[0]),
-            dtype=K.floatx(),
-        )
-
-    def _call_pos(self, feature, edge, index):
-        return K.max(feature + K.expand_dims((1.0 - edge[index]) * -1e10), axis=0)
+        node_num = K.shape(features)[1]
+        features = K.tile(K.expand_dims(features, axis=1), K.stack([1, node_num, 1, 1])) \
+            + K.expand_dims((1.0 - edges) * self.NEG_INF, axis=-1)
+        return K.max(features, axis=2)
 
 
 class GraphAveragePool(GraphPool):

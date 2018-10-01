@@ -51,7 +51,7 @@ class TestGraphPool(unittest.TestCase):
             [2, 6, 8],
             [3, 7, 2],
         ])
-        self.assertTrue(np.allclose(expects, predicts))
+        self.assertTrue(np.allclose(expects, predicts), predicts)
         conv_layer = GraphMaxPool(
             step_num=2,
             name='GraphMaxPool',
@@ -69,7 +69,7 @@ class TestGraphPool(unittest.TestCase):
             [2, 6, 9],
             [3, 7, 2],
         ])
-        self.assertTrue(np.allclose(expects, predicts))
+        self.assertTrue(np.allclose(expects, predicts), predicts)
 
     def test_average_pooling(self):
         data_layer = keras.layers.Input(shape=(None, 3), name='Input-Data')
@@ -95,7 +95,7 @@ class TestGraphPool(unittest.TestCase):
             [1, 5, 4.5],
             [3, 7, 2],
         ])
-        self.assertTrue(np.allclose(expects, predicts))
+        self.assertTrue(np.allclose(expects, predicts), predicts)
         conv_layer = GraphAveragePool(
             step_num=2,
             name='GraphAveragePool',
@@ -113,7 +113,7 @@ class TestGraphPool(unittest.TestCase):
             [1, 5, 6],
             [3, 7, 2],
         ])
-        self.assertTrue(np.allclose(expects, predicts))
+        self.assertTrue(np.allclose(expects, predicts), predicts)
 
     def test_not_implemented(self):
         with self.assertRaises(NotImplementedError):
