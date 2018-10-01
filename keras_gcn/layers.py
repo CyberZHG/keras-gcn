@@ -5,6 +5,12 @@ import keras.backend as K
 class GraphLayer(keras.layers.Layer):
 
     def _get_walked_edges(self, edges, step_num):
+        """Get the connection graph within `step_num` steps
+
+        :param edges: The graph in single step.
+        :param step_num: Number of steps.
+        :return: The new graph that has the same shape with `edges`.
+        """
         if step_num <= 1:
             return edges
         deeper = self._get_walked_edges(K.batch_dot(edges, edges), step_num // 2)
@@ -14,6 +20,10 @@ class GraphLayer(keras.layers.Layer):
 
 
 class GraphConv(GraphLayer):
+    """Graph convolutional layer.
+
+    h_i^{(t)} = \sigma \left ( \frac{ G_i^T (h_i^{(t - 1)} W + b)}{\sum G_i}  \right )
+    """
 
     def __init__(self,
                  units,
@@ -27,6 +37,21 @@ class GraphConv(GraphLayer):
                  bias_regularizer=None,
                  bias_constraint=None,
                  **kwargs):
+        """Initialize the layer.
+
+        :param units: Number of new states. If the input shape is (batch_size, node_num, feature_len), then the output
+                      shape is (batch_size, node_num, units).
+        :param step_num: Two nodes are considered as connected if they could be reached in `step_num` steps.
+        :param activation: The activation function after convolution.
+        :param kernel_initializer: The initializer of the kernel weight matrix.
+        :param kernel_regularizer: The regularizer of the kernel weight matrix.
+        :param kernel_constraint:  The constraint of the kernel weight matrix.
+        :param use_bias: Whether to use bias term.
+        :param bias_initializer: The initializer of the bias vector.
+        :param bias_regularizer: The regularizer of the bias vector.
+        :param bias_constraint: The constraint of the bias vector.
+        :param kwargs: Other arguments for parent class.
+        """
         self.units = units
         self.step_num = step_num
         self.activation = keras.activations.get(activation)
@@ -86,27 +111,14 @@ class GraphConv(GraphLayer):
         features, edges = inputs
         edges = K.cast(edges, K.floatx())
         features = K.dot(features, self.W)
+        if self.use_bias:
+            features += self.b
         if self.step_num > 1:
             edges = self._get_walked_edges(edges, self.step_num)
-        outputs = K.map_fn(
-            lambda x: self._call_single(x[0], x[1]),
-            (features, edges),
-            dtype=K.floatx(),
-        )
+        outputs = K.batch_dot(K.permute_dimensions(edges, (0, 2, 1)), features) \
+            / (K.sum(edges, axis=2, keepdims=True) + K.epsilon())
         outputs = self.activation(outputs)
         return outputs
-
-    def _call_single(self, feature, edge):
-        return K.map_fn(
-            lambda index: self._call_pos(feature, edge, index),
-            K.arange(K.shape(feature)[0]),
-            dtype=K.floatx(),
-        )
-
-    def _call_pos(self, feature, edge, index):
-        if self.use_bias:
-            feature += self.b
-        return K.sum(feature * K.expand_dims(edge[index]), axis=0) / (K.sum(edge[index]) + K.epsilon())
 
 
 class GraphPool(GraphLayer):

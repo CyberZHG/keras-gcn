@@ -33,6 +33,7 @@ class TestGraphConv(unittest.TestCase):
             units=2,
             step_num=1,
             kernel_initializer='ones',
+            bias_initializer='ones',
             name='GraphConv',
         )([data_layer, edge_layer])
         model = keras.models.Model(inputs=[data_layer, edge_layer], outputs=conv_layer)
@@ -44,10 +45,10 @@ class TestGraphConv(unittest.TestCase):
         model.summary()
         predicts = model.predict([self.input_data, self.input_edge])[0]
         expects = np.asarray([
-            [9., 9.],
-            [6., 6.],
-            [9., 9.],
-            [22., 22.],
+            [10., 10.],
+            [7., 7.],
+            [10., 10.],
+            [23., 23.],
         ])
         self.assertTrue(np.allclose(expects, predicts))
 

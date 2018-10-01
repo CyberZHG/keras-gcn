@@ -112,3 +112,6 @@ venv.bak/
 # Data
 *.h5
 *.pickle
+
+# Temporary files
+README.rst
