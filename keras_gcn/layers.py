@@ -4,6 +4,30 @@ import keras.backend as K
 
 class GraphLayer(keras.layers.Layer):
 
+    def __init__(self,
+                 step_num=1,
+                 activation=None,
+                 **kwargs):
+        """Initialize the layer.
+
+        :param step_num: Two nodes are considered as connected if they could be reached in `step_num` steps.
+        :param activation: The activation function after convolution.
+        :param kwargs: Other arguments for parent class.
+        """
+        self.supports_masking = True
+        self.step_num = step_num
+        self.activation = keras.activations.get(activation)
+        self.supports_masking = True
+        super(GraphLayer, self).__init__(**kwargs)
+
+    def get_config(self):
+        config = {
+            'step_num': self.step_num,
+            'activation': self.activation,
+        }
+        base_config = super(GraphLayer, self).get_config()
+        return dict(list(base_config.items()) + list(config.items()))
+
     def _get_walked_edges(self, edges, step_num):
         """Get the connection graph within `step_num` steps
 
@@ -18,6 +42,17 @@ class GraphLayer(keras.layers.Layer):
             deeper += edges
         return K.cast(K.greater(deeper, 0.0), K.floatx())
 
+    def call(self, inputs, **kwargs):
+        features, edges = inputs
+        edges = K.cast(edges, K.floatx())
+        if self.step_num > 1:
+            edges = self._get_walked_edges(edges, self.step_num)
+        outputs = self.activation(self._call(features, edges))
+        return outputs
+
+    def _call(self, features, edges):
+        raise NotImplementedError('The class is not intended to be used directly.')
+
 
 class GraphConv(GraphLayer):
     """Graph convolutional layer.
@@ -27,8 +62,6 @@ class GraphConv(GraphLayer):
 
     def __init__(self,
                  units,
-                 step_num=1,
-                 activation=None,
                  kernel_initializer='glorot_uniform',
                  kernel_regularizer=None,
                  kernel_constraint=None,
@@ -41,8 +74,6 @@ class GraphConv(GraphLayer):
 
         :param units: Number of new states. If the input shape is (batch_size, node_num, feature_len), then the output
                       shape is (batch_size, node_num, units).
-        :param step_num: Two nodes are considered as connected if they could be reached in `step_num` steps.
-        :param activation: The activation function after convolution.
         :param kernel_initializer: The initializer of the kernel weight matrix.
         :param kernel_regularizer: The regularizer of the kernel weight matrix.
         :param kernel_constraint:  The constraint of the kernel weight matrix.
@@ -53,8 +84,6 @@ class GraphConv(GraphLayer):
         :param kwargs: Other arguments for parent class.
         """
         self.units = units
-        self.step_num = step_num
-        self.activation = keras.activations.get(activation)
         self.kernel_initializer = keras.initializers.get(kernel_initializer)
         self.kernel_regularizer = keras.regularizers.get(kernel_regularizer)
         self.kernel_constraint = keras.constraints.get(kernel_constraint)
@@ -62,15 +91,13 @@ class GraphConv(GraphLayer):
         self.bias_initializer = keras.initializers.get(bias_initializer)
         self.bias_regularizer = keras.regularizers.get(bias_regularizer)
         self.bias_constraint = keras.constraints.get(bias_constraint)
-        self.supports_masking = True
+
         self.W, self.b = None, None
         super(GraphConv, self).__init__(**kwargs)
 
     def get_config(self):
         config = {
             'units': self.units,
-            'step_num': self.step_num,
-            'activation': self.activation,
             'kernel_initializer': self.kernel_initializer,
             'kernel_regularizer': self.kernel_regularizer,
             'kernel_constraint': self.kernel_constraint,
@@ -107,38 +134,17 @@ class GraphConv(GraphLayer):
     def compute_mask(self, inputs, mask=None):
         return mask[0]
 
-    def call(self, inputs, **kwargs):
-        features, edges = inputs
-        edges = K.cast(edges, K.floatx())
+    def _call(self, features, edges):
         features = K.dot(features, self.W)
         if self.use_bias:
             features += self.b
         if self.step_num > 1:
             edges = self._get_walked_edges(edges, self.step_num)
-        outputs = K.batch_dot(K.permute_dimensions(edges, (0, 2, 1)), features) \
+        return K.batch_dot(K.permute_dimensions(edges, (0, 2, 1)), features) \
             / (K.sum(edges, axis=2, keepdims=True) + K.epsilon())
-        outputs = self.activation(outputs)
-        return outputs
 
 
 class GraphPool(GraphLayer):
-
-    def __init__(self,
-                 step_num=1,
-                 **kwargs):
-        self.step_num = step_num
-        self.supports_masking = True
-        super(GraphPool, self).__init__(**kwargs)
-
-    def get_config(self):
-        config = {
-            'step_num': self.step_num,
-        }
-        base_config = super(GraphPool, self).get_config()
-        return dict(list(base_config.items()) + list(config.items()))
-
-    def build(self, input_shape):
-        super(GraphPool, self).build(input_shape)
 
     def compute_output_shape(self, input_shape):
         return input_shape
@@ -146,11 +152,10 @@ class GraphPool(GraphLayer):
     def compute_mask(self, inputs, mask=None):
         return mask[0]
 
-    def call(self, inputs, **kwargs):
-        features, edges = inputs
-        edges = K.cast(edges, K.floatx())
-        if self.step_num > 1:
-            edges = self._get_walked_edges(edges, self.step_num)
+
+class GraphMaxPool(GraphPool):
+
+    def _call(self, features, edges):
         outputs = K.map_fn(
             lambda x: self._call_single(x[0], x[1]),
             (features, edges),
@@ -166,16 +171,11 @@ class GraphPool(GraphLayer):
         )
 
     def _call_pos(self, feature, edge, index):
-        raise NotImplementedError('The class is not intended to be used directly.')
-
-
-class GraphMaxPool(GraphPool):
-
-    def _call_pos(self, feature, edge, index):
         return K.max(feature + K.expand_dims((1.0 - edge[index]) * -1e10), axis=0)
 
 
 class GraphAveragePool(GraphPool):
 
-    def _call_pos(self, feature, edge, index):
-        return K.sum(feature * K.expand_dims(edge[index]), axis=0) / K.sum(edge[index])
+    def _call(self, features, edges):
+        return K.batch_dot(K.permute_dimensions(edges, (0, 2, 1)), features) \
+            / (K.sum(edges, axis=2, keepdims=True) + K.epsilon())
