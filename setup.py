@@ -12,7 +12,7 @@ with codecs.open('requirements.txt', 'r', 'utf8') as reader:
 
 setup(
     name='keras-gcn',
-    version='0.11.0',
+    version='0.12.0',
     packages=find_packages(),
     url='https://github.com/CyberZHG/keras-gcn',
     license='MIT',
