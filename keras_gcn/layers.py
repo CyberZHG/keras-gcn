@@ -98,13 +98,13 @@ class GraphConv(GraphLayer):
     def get_config(self):
         config = {
             'units': self.units,
-            'kernel_initializer': self.kernel_initializer,
-            'kernel_regularizer': self.kernel_regularizer,
-            'kernel_constraint': self.kernel_constraint,
+            'kernel_initializer': keras.initializers.serialize(self.kernel_initializer),
+            'kernel_regularizer': keras.regularizers.serialize(self.kernel_regularizer),
+            'kernel_constraint': keras.constraints.serialize(self.kernel_constraint),
             'use_bias': self.use_bias,
-            'bias_initializer': self.bias_initializer,
-            'bias_regularizer': self.bias_regularizer,
-            'bias_constraint': self.bias_constraint,
+            'bias_initializer': keras.initializers.serialize(self.bias_initializer),
+            'bias_regularizer': keras.regularizers.serialize(self.bias_regularizer),
+            'bias_constraint': keras.constraints.serialize(self.bias_constraint),
         }
         base_config = super(GraphConv, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
