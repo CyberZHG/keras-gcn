@@ -1,9 +1,10 @@
 import unittest
 import os
 import tempfile
-import random
-import keras
+
 import numpy as np
+
+from keras_gcn.backend import keras
 from keras_gcn import GraphMaxPool, GraphAveragePool
 from keras_gcn.layers import GraphPool
 
@@ -40,7 +41,7 @@ class TestGraphPool(unittest.TestCase):
             loss='mae',
             metrics=['mae'],
         )
-        model_path = os.path.join(tempfile.gettempdir(), 'test_save_load_%f.h5' % random.random())
+        model_path = os.path.join(tempfile.gettempdir(), 'test_save_load_%f.h5' % np.random.random())
         model.save(model_path)
         model = keras.models.load_model(model_path, custom_objects={'GraphMaxPool': GraphMaxPool})
         model.summary()
@@ -84,7 +85,7 @@ class TestGraphPool(unittest.TestCase):
             loss='mae',
             metrics=['mae'],
         )
-        model_path = os.path.join(tempfile.gettempdir(), 'test_save_load_%f.h5' % random.random())
+        model_path = os.path.join(tempfile.gettempdir(), 'test_save_load_%f.h5' % np.random.random())
         model.save(model_path)
         model = keras.models.load_model(model_path, custom_objects={'GraphAveragePool': GraphAveragePool})
         model.summary()

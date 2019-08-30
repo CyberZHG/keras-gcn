@@ -4,3 +4,4 @@ wheel>=0.31.0
 tensorflow
 pycodestyle
 coverage
+nose

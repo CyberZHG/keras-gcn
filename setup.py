@@ -12,12 +12,12 @@ with codecs.open('requirements.txt', 'r', 'utf8') as reader:
 
 setup(
     name='keras-gcn',
-    version='0.12.0',
+    version='0.13.0',
     packages=find_packages(),
     url='https://github.com/CyberZHG/keras-gcn',
     license='MIT',
     author='CyberZHG',
-    author_email='CyberZHG@gmail.com',
+    author_email='CyberZHG@users.noreply.github.com',
     description='Graph convolutional layers',
     long_description=long_description,
     long_description_content_type='text/markdown',

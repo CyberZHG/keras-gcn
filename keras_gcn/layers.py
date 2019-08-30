@@ -1,5 +1,5 @@
-import keras
-import keras.backend as K
+from .backend import keras
+from .backend import backend as K
 
 
 class GraphLayer(keras.layers.Layer):
@@ -55,7 +55,7 @@ class GraphLayer(keras.layers.Layer):
 
 
 class GraphConv(GraphLayer):
-    """Graph convolutional layer.
+    r"""Graph convolutional layer.
 
     h_i^{(t)} = \sigma \left ( \frac{ G_i^T (h_i^{(t - 1)} W + b)}{\sum G_i}  \right )
     """
@@ -159,7 +159,7 @@ class GraphMaxPool(GraphPool):
 
     def _call(self, features, edges):
         node_num = K.shape(features)[1]
-        features = K.tile(K.expand_dims(features, axis=1), K.stack([1, node_num, 1, 1])) \
+        features = K.tile(K.expand_dims(features, axis=1), [1, node_num, 1, 1]) \
             + K.expand_dims((1.0 - edges) * self.NEG_INF, axis=-1)
         return K.max(features, axis=2)
 

@@ -1,9 +1,10 @@
 import unittest
 import os
 import tempfile
-import random
-import keras
+
 import numpy as np
+
+from keras_gcn.backend import keras
 from keras_gcn import GraphConv
 
 
@@ -69,7 +70,7 @@ class TestGraphConv(unittest.TestCase):
             loss='mae',
             metrics=['mae'],
         )
-        model_path = os.path.join(tempfile.gettempdir(), 'test_save_load_%f.h5' % random.random())
+        model_path = os.path.join(tempfile.gettempdir(), 'test_save_load_%f.h5' % np.random.random())
         model.save(model_path)
         model = keras.models.load_model(model_path, custom_objects={'GraphConv': GraphConv})
         predicts = model.predict([self.input_data, self.input_edge])[0].tolist()
