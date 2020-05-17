@@ -5,28 +5,29 @@ import tempfile
 import numpy as np
 
 from keras_gcn.backend import keras
+from keras_gcn.backend import backend as K
 from keras_gcn import GraphMaxPool, GraphAveragePool
 from keras_gcn.layers import GraphPool
 
 
 class TestGraphPool(unittest.TestCase):
 
-    input_data = [
+    input_data = np.array([
         [
             [0, 4, 8],
             [1, 5, 9],
             [2, 6, 1],
             [3, 7, 2],
         ]
-    ]
-    input_edge = [
+    ], dtype=K.floatx())
+    input_edge = np.array([
         [
             [1, 1, 1, 0],
             [1, 1, 0, 0],
             [1, 0, 1, 0],
             [0, 0, 0, 1],
         ]
-    ]
+    ], dtype='int32')
 
     def test_max_pool(self):
         data_layer = keras.layers.Input(shape=(None, 3), name='Input-Data')

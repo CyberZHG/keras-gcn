@@ -5,27 +5,28 @@ import tempfile
 import numpy as np
 
 from keras_gcn.backend import keras
+from keras_gcn.backend import backend as K
 from keras_gcn import GraphConv
 
 
 class TestGraphConv(unittest.TestCase):
 
-    input_data = [
+    input_data = np.array([
         [
             [0, 1, 2],
             [2, 3, 4],
             [4, 5, 6],
             [7, 7, 8],
         ]
-    ]
-    input_edge = [
+    ], dtype=K.floatx())
+    input_edge = np.array([
         [
             [1, 1, 1, 0],
             [1, 1, 0, 0],
             [1, 0, 1, 0],
             [0, 0, 0, 1],
         ]
-    ]
+    ], dtype='int32')
 
     def test_average_step_1(self):
         data_layer = keras.layers.Input(shape=(None, 3), name='Input-Data')
