@@ -20,7 +20,7 @@ pip install keras-gcn
 
 ```python
 import keras
-from keras_gru import GraphConv
+from keras_gcn import GraphConv
 
 
 DATA_DIM = 3
