@@ -1,9 +1,5 @@
 # Keras Graph Convolutional Network
 
-[![Travis](https://travis-ci.org/CyberZHG/keras-gcn.svg)](https://travis-ci.org/CyberZHG/keras-gcn)
-[![Coverage](https://coveralls.io/repos/github/CyberZHG/keras-gcn/badge.svg?branch=master)](https://coveralls.io/github/CyberZHG/keras-gcn)
-[![PyPI](https://img.shields.io/pypi/pyversions/keras-gcn.svg)](https://pypi.org/project/keras-gcn/)
-
 Graph convolutional layers.
 
 ## Install
@@ -19,8 +15,8 @@ pip install keras-gcn
 ![](https://user-images.githubusercontent.com/853842/46645052-88d54f00-cbb5-11e8-9acb-70f4ae5ec654.png)
 
 ```python
-import keras
-from keras_gru import GraphConv
+from tensorflow import keras
+from keras_gcn import GraphConv
 
 
 DATA_DIM = 3

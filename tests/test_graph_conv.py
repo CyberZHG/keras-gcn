@@ -3,9 +3,9 @@ import os
 import tempfile
 
 import numpy as np
+from tensorflow import keras
+from tensorflow.keras import backend as K
 
-from keras_gcn.backend import keras
-from keras_gcn.backend import backend as K
 from keras_gcn import GraphConv
 
 
